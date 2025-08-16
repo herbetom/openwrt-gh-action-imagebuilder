@@ -1,72 +1,85 @@
-# OpenWrt GitHub Action SDK
+# OpenWrt GitHub Action Image Builder
 
-GitHub CI action to build packages via SDK using official OpenWrt SDK Docker
-containers. This is primary used to test build OpenWrt repositories but can
-also be used for downstream projects maintaining their own package
-repositories.
+GitHub CI action to build images via Image Builder using official OpenWrt
+Image Builder Docker containers.
 
 ## Example usage
 
 The following YAML code can be used to build all packages of a repository and
-store created `ipk` files as artifacts.
+store created image files as artifacts.
 
 ```yaml
 name: Test Build
 
 on:
-  pull_request:
-    branches:
-      - main
+  push: {}
+  pull_request: {}
 
 jobs:
   build:
-    name: ${{ matrix.arch }} build
+    name: build ${{ matrix.release }} ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        arch:
-          - x86_64
-          - mips_24kc
+        release:
+          - SNAPSHOT
+          - 24.10.2
+        target:
+          - x86-64
+          - mediatek-filogic
+        include:
+          - target: x86-64
+            device: generic
+            distrib_arch: x86_64
+          - target: mediatek-filogic
+            device: zyxel_nwa50ax-pro openwrt_one
+            distrib_arch: aarch64_cortex-a53
 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+
+      - name: create files
+        run: |
+          mkdir -p files
+          date > files/buildtime
 
       - name: Build
-        uses: openwrt/gh-action-sdk@main
-        env:
-          ARCH: ${{ matrix.arch }}
-
-      - name: Store packages
-        uses: actions/upload-artifact@v2
+        uses: herbetom/openwrt-gh-action-imagebuilder@main
         with:
-          name: ${{ matrix.arch}}-packages
-          path: bin/packages/${{ matrix.arch }}/packages/*.ipk
+          release: ${{ matrix.release }}
+          target-name: ${{ matrix.target }}
+          profile: ${{ matrix.device }}
+        env:
+          PACKAGES: nano
+          FILES_DIR: "${{ github.workspace }}/files"
+        id: build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.device }}
+          path: |
+            bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/
 ```
+
+## Action Inputs
+
+* `release`: the release to use (e.g. main, 24.10.2, openwrt-24.10)
+* `target-name`: the target to use (e.g. x86-64)
+* `profile`: The profile to generate the image for (e.g. generic). You can seperate multiple with a white space.
+
 
 ## Environmental variables
 
 The action reads a few env variables:
 
-* `ARCH` determines the used OpenWrt SDK Docker container.
-  E.g. `x86_64` or `x86_64-22.03.2`.
-* `ARTIFACTS_DIR` determines where built packages and build logs are saved.
-  Defaults to the default working directory (`GITHUB_WORKSPACE`).
-* `BUILD_LOG` stores build logs in `./logs`.
-* `CONTAINER` can set other SDK containers than `openwrt/sdk`.
-* `EXTRA_FEEDS` are added to the `feeds.conf`, where `|` are replaced by white
-  spaces.
-* `FEED_DIR` used in the created `feeds.conf` for the current repo. Defaults to
-  the default working directory (`GITHUB_WORKSPACE`).
-* `FEEDNAME` used in the created `feeds.conf` for the current repo. Defaults to
-  `action`.
-* `IGNORE_ERRORS` can ignore failing packages builds.
-* `INDEX` makes the action build the package index. Default is 0. Set to 1 to enable.
-* `KEY_BUILD` can be a private Signify/`usign` key to sign the packages (ipk) feed.
-* `PRIVATE_KEY` can be a private key to sign the packages (apk) feed.
-* `NO_DEFAULT_FEEDS` disable adding the default SDK feeds
-* `NO_REFRESH_CHECK` disable check if patches need a refresh.
-* `NO_SHFMT_CHECK` disable check if init files are formated
-* `PACKAGES` (Optional) specify the list of packages (space separated) to be built
-* `V` changes the build verbosity level.
+* `PACKAGES` packages to include. You can seperate multiple with a white space.
+* `FILES_DIR` location of a dir of files to include in the finished images.
+* `EXTRA_IMAGE_NAME` add this to the output image filename (sanitized)
+* `DISABLED_SERVICES` which services in /etc/init.d/ should be disabled
+* `ADD_LOCAL_KEY` store locally generated signing key in built images
+* `ROOTFS_PARTSIZE` override the default rootfs partition size in MegaBytes
+* `NO_DEFAULT_REPOS` clean out the default repositories
+* `CUSTOM_REPO` the content will be prepended in the repositories file
+* `NO_DEFAULT_KEYS` clean out the default keys
+* `KEYS_DIR` location of a dir of files with keys.

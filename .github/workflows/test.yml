@@ -2,40 +2,66 @@ name: Test
 
 on:
   pull_request:
+    branches:
+      - main
+  push: {}
+  workflow_dispatch: {}
 
 jobs:
   build:
-    name: Test ${{ matrix.arch }}-${{ matrix.release }}
+    name: Test ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.profile }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         release:
-          - master
-          - 24.10.1
-          - 23.05.5
-        arch:
-          - aarch64_generic
-          - arm_cortex-a15_neon-vfpv4
-          - mips_24kc
-          - x86_64
+          - main
+          - 24.10.2
+        target:
+          - x86-64
+          - mediatek-filogic
+        include:
+          - target: x86-64
+            profile: generic
+            distrib_arch: x86_64
+          - target: mediatek-filogic
+            profile: zyxel_nwa50ax-pro openwrt_one
+            distrib_arch: aarch64_cortex-a53
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Add test directories
-        run: mkdir artifacts feed
+        run: mkdir -p artifacts files
+
+      - name: create files
+        run: |
+          date > files/buildtime
 
       - name: Build
         uses: ./
+        with:
+          release: ${{ matrix.release }}
+          target-name: ${{ matrix.target }}
+          profile: ${{ matrix.profile }}
         env:
-          ARCH: ${{ matrix.arch }}-${{ matrix.release }}
           ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
-          FEED_DIR: ${{ github.workspace }}/feed
-          PACKAGES: vim privoxy
+          PACKAGES: nano htop tcpdump tmux ethtool-full
+          FILES_DIR: "${{ github.workspace }}/files"
+        id: build
 
-      - name: Verify packages saved
-        run: find artifacts/bin/packages/${{ matrix.arch }}/packages/ -maxdepth 1 -name '*.[ai]pk' -type f | grep .
+      - name: list files
+        run: ls -R
+        if: always()
 
-      - name: Verify logs saved
-        run: find artifacts/logs/package/feeds/packages/ -mindepth 2 -maxdepth 2 -name compile.txt -type f | grep .
+      - name: Verify images saved
+        run: find artifacts/bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/ -maxdepth 1 -name '*.bin' -type f | grep .
+
+      - name: output profiles.json
+        run: jq '.' artifacts/bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/profiles.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.release }}-${{ matrix.target }}
+          path: |
+            artifacts/bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/
