@@ -22,7 +22,7 @@ jobs:
     name: build ${{ matrix.release }} ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
-
+      fail-fast: false
       matrix:
         release:
           - SNAPSHOT

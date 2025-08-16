@@ -16,11 +16,10 @@ jobs:
       matrix:
         release:
           - main
-          # - "24.10.2"
+          - 24.10.2
         target:
           - x86-64
           - mediatek-filogic
-          # - ramips-mt7621
         include:
           - target: x86-64
             profile: generic
@@ -28,9 +27,6 @@ jobs:
           - target: mediatek-filogic
             profile: zyxel_nwa50ax-pro openwrt_one
             distrib_arch: aarch64_cortex-a53
-          # - target: ramips-mt7621
-          #   profile: genexis_pulse-ex400
-          #   distrib_arch: mipsel_24kc
 
     steps:
       - uses: actions/checkout@v4
