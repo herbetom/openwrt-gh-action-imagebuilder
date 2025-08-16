@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Test ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.device }}
+    name: Test ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.profile }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,13 +23,13 @@ jobs:
           # - ramips-mt7621
         include:
           - target: x86-64
-            device: generic
+            profile: generic
             distrib_arch: x86_64
           - target: mediatek-filogic
-            device: zyxel_nwa50ax-pro openwrt_one
+            profile: zyxel_nwa50ax-pro openwrt_one
             distrib_arch: aarch64_cortex-a53
           # - target: ramips-mt7621
-          #   device: genexis_pulse-ex400
+          #   profile: genexis_pulse-ex400
           #   distrib_arch: mipsel_24kc
 
     steps:
@@ -50,7 +50,7 @@ jobs:
         with:
           release: ${{ matrix.release }}
           target-name: ${{ matrix.target }}
-          profile: ${{ matrix.device }}
+          profile: ${{ matrix.profile }}
         env:
           ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           PACKAGES: nano htop tcpdump tmux ethtool-full jq uconfig uconfig-cli uconfig-client uconfig-mod-fingerprint uconfig-mod-lldp
@@ -76,6 +76,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.device }}
+          name: ${{ matrix.release }}-${{ matrix.target }}
           path: |
             artifacts/bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/

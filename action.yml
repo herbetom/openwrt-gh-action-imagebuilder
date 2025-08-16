@@ -21,9 +21,6 @@ outputs:
     description: "subtarget name (e.g. 64)"
     value: ${{ steps.outputs.outputs.subtarget }}
 
-env:
-  PROFILE: ${{ inputs.profile }}
-
 runs:
   using: 'composite'
   steps:
@@ -72,6 +69,8 @@ runs:
         load: true
 
     - name: docker run
+      env:
+        PROFILE: ${{ inputs.profile }}
       run: |
         MOUNT_OPTIONS=""
         if [[ -n "$FILES_DIR" ]]; then
