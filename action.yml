@@ -27,8 +27,8 @@ runs:
 
     - run: |
         echo "artifacts_dir=${ARTIFACTS_DIR:-$GITHUB_WORKSPACE}" >> "$GITHUB_OUTPUT"
-        echo "keys_dir=${KEYS_DIR:-$GITHUB_WORKSPACE/keys}" >> "$GITHUB_OUTPUT"
-        echo "files_dir=${KEYS_DIR:-$GITHUB_WORKSPACE/files}" >> "$GITHUB_OUTPUT"
+        echo "keys_dir=${KEYS_DIR:-}" >> "$GITHUB_OUTPUT"
+        echo "files_dir=${FILES_DIR:-}" >> "$GITHUB_OUTPUT"
       shell: bash
       id: inputs
 
@@ -44,10 +44,16 @@ runs:
     #   shell: bash
     - run: ls -lR ${{ steps.inputs.outputs.keys_dir }} || true
       shell: bash
-    - run: sudo chown -R 1000:1000 ${{ steps.inputs.outputs.artifacts_dir }} ${{ steps.inputs.outputs.keys_dir }}
+    - run: sudo chown -R 1000:1000 ${{ steps.inputs.outputs.artifacts_dir }}
       shell: bash
-    - run: sudo chown -R 1000:1000 ${{ steps.inputs.outputs.artifacts_dir }} ${{ steps.inputs.outputs.keys_dir }}
+    - run: if [[ -n "$KEYS_DIR" ]]; then sudo chown -R 1000:1000 $KEYS_DIR; fi
       shell: bash
+      env:
+        KEYS_DIR: ${{ steps.inputs.outputs.keys_dir }} 
+    - run: if [[ -n "$FILES_DIR" ]]; then sudo chown -R 1000:1000 $FILES_DIR; fi
+      shell: bash
+      env:
+        FILES_DIR: ${{ steps.inputs.outputs.files_dir }}
     - name: Set up Docker QEMU
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
@@ -71,6 +77,7 @@ runs:
     - name: docker run
       env:
         PROFILE: ${{ inputs.profile }}
+        files_dir: ${{ steps.inputs.outputs.files_dir }}
       run: |
         MOUNT_OPTIONS=""
         if [[ -n "$FILES_DIR" ]]; then
