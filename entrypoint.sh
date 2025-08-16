@@ -51,7 +51,7 @@ if [[ -n "$NO_DEFAULT_REPOS" ]]; then
 fi
 
 if [[ -n "$CUSTOM_REPO" ]]; then
-	echo "prepend repositories file with CUSTOM_REPO"
+	echo "prepend repositories file with content of CUSTOM_REPO"
 	echo "$CUSTOM_REPO" | cat - $REPO_FILE > temp && mv temp $REPO_FILE
 fi
 

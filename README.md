@@ -19,7 +19,7 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.arch }} build
+    name: build ${{ matrix.release }} ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
 
@@ -53,7 +53,6 @@ jobs:
           target-name: ${{ matrix.target }}
           profile: ${{ matrix.device }}
         env:
-          ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
           PACKAGES: nano
           FILES_DIR: "${{ github.workspace }}/files"
         id: build
@@ -62,7 +61,7 @@ jobs:
         with:
           name: ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.device }}
           path: |
-            artifacts/bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/
+            bin/targets/${{ steps.build.outputs.target }}/${{ steps.build.outputs.subtarget }}/
 ```
 
 ## Action Inputs
