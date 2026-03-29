@@ -45,7 +45,7 @@ jobs:
           date > files/buildtime
 
       - name: Build
-        uses: herbetom/openwrt-gh-action-imagebuilder@v1
+        uses: herbetom/openwrt-gh-action-imagebuilder@v2
         with:
           release: ${{ matrix.release }}
           target-name: ${{ matrix.target }}
@@ -55,7 +55,7 @@ jobs:
           FILES_DIR: "${{ github.workspace }}/files"
         id: build
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.release }}-${{ matrix.target }}-${{ matrix.device }}
           path: |
