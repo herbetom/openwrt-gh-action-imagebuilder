@@ -60,13 +60,13 @@ runs:
         FILES_DIR: ${{ steps.inputs.outputs.files_dir }}
 
     - name: Set up Docker QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Build Docker container image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
         DOCKER_BUILD_SUMMARY: false
         ARCH: ${{ inputs.target-name }}-${{ inputs.release }}
