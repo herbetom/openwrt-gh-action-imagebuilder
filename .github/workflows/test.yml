@@ -16,6 +16,7 @@ jobs:
       matrix:
         release:
           - main
+          - 25.12.2
           - 24.10.2
         target:
           - x86-64
